@@ -1,10 +1,11 @@
 from bson import ObjectId
+import os
 from sentence_transformers import SentenceTransformer
 from pymongo import MongoClient
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-client = MongoClient("mongodb://localhost:27017")
+client = MongoClient(os.getenv("MONGO_URL"))
 db = client["ITJOBS"]
 jobs = db["jobs"]
 skills = db["skills"]

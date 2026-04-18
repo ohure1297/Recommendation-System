@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from io import BytesIO
 import pdfplumber
@@ -21,7 +22,7 @@ app.add_middleware(
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-client = MongoClient("mongodb://localhost:27017")
+client = MongoClient(os.getenv("MONGO_URL"))
 db = client["ITJOBS"]
 job_collection = db["jobs"]
 skills_collection = db["skills"]
