@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from io import BytesIO
+import re
 import pdfplumber
 from sentence_transformers import SentenceTransformer
 from rapidfuzz import fuzz
@@ -10,6 +11,7 @@ from sklearn.preprocessing import normalize
 from pymongo import MongoClient
 import numpy as np
 from bson import ObjectId
+from cities import get_canonical_city, is_city_match
 
 app = FastAPI()
 
@@ -64,6 +66,146 @@ def extract_skills(text):
         if skill in text_lower or fuzz.partial_ratio(skill, text_lower) > 85:
             skills.append(skill)
     return list(set(skills))
+
+
+def normalize_text(text):
+    if not text:
+        return ""
+    return re.sub(r"\s+", " ", text.lower().strip())
+
+
+def extract_city(text):
+    """Extract city name from text using cities.py"""
+    if not text:
+        return ""
+    return get_canonical_city(text)
+
+
+def extract_location_text(text):
+    """Extract full location address from CV (not just city)"""
+    text_lower = text.lower()
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    markers = ["nơi ở", "noi o", "địa chỉ", "dia chi", "đ/c", "dc", "address", "location", "📍", "pin"]
+    for line in lines:
+        for marker in markers:
+            if marker in line.lower():
+                # capture full text after the marker or icon
+                if marker == "📍":
+                    result = line.split(marker, 1)[1].strip()
+                else:
+                    parts = re.split(re.escape(marker), line, flags=re.IGNORECASE)
+                    result = parts[1].strip() if len(parts) > 1 else line.strip()
+                result = re.sub(r"^[\-:\s]+", "", result)
+                if result:
+                    return result
+    # Last resort: find line with city keyword
+    for line in lines:
+        if extract_city(line):
+            return line
+    return ""
+
+
+def parse_experience_text(text):
+    if not text:
+        return None
+
+    normalized = text.lower()
+    no_experience_markers = [
+        "no formal work experience",
+        "no experience",
+        "chưa có kinh nghiệm",
+        "không có kinh nghiệm",
+        "no working experience",
+        "no professional experience",
+    ]
+    for marker in no_experience_markers:
+        if marker in normalized:
+            return 0
+
+    def parse_experience_line(line):
+        if not line:
+            return None
+        line_lower = line.lower()
+        range_match = re.search(
+            r"(\d+)\s*(?:\+|\-\s*|to|đến|den|–)\s*(\d+)\s*(?:năm|nam|year|years|yr|yrs)",
+            line_lower,
+        )
+        if range_match:
+            return max(int(range_match.group(1)), int(range_match.group(2)))
+        single_match = re.search(r"(\d+)\s*(?:\+)?\s*(?:năm|nam|year|years|yr|yrs)", line_lower)
+        if single_match:
+            return int(single_match.group(1))
+        return None
+
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    experience_lines = []
+    for line in lines:
+        lower_line = line.lower()
+        if any(marker in lower_line for marker in [
+            "kinh nghiệm",
+            "experience",
+            "work experience",
+            "years of experience",
+            "years experience",
+            "năm kinh nghiệm",
+        ]):
+            experience_lines.append(line)
+
+    if not experience_lines:
+        for index, line in enumerate(lines):
+            lower_line = line.lower()
+            if any(marker in lower_line for marker in ["kinh nghiệm", "experience"]):
+                if index + 1 < len(lines):
+                    experience_lines.append(lines[index + 1])
+
+    for line in experience_lines:
+        for marker in no_experience_markers:
+            if marker in line.lower():
+                return 0
+        parsed = parse_experience_line(line)
+        if parsed is not None:
+            return parsed
+
+    return None
+
+
+def parse_job_experience(experience):
+    if experience is None:
+        return None
+    if isinstance(experience, (int, float)):
+        return int(experience)
+    text = str(experience).lower()
+    if not text:
+        return None
+    range_match = re.search(r"(\d+)\s*(?:\+|\-\s*|to|đến|den|–)\s*(\d+)\s*(?:năm|nam|year|years|yr|yrs)?", text)
+    if range_match:
+        return max(int(range_match.group(1)), int(range_match.group(2)))
+    single_match = re.search(r"(\d+)\s*(?:\+)?\s*(?:năm|nam|year|years|yr|yrs)", text)
+    if single_match:
+        return int(single_match.group(1))
+    digits = re.findall(r"\d+", text)
+    return int(digits[0]) if digits else None
+
+
+def get_job_location_city(job):
+    """Extract city from job location fields"""
+    parts = []
+    location_field = job.get("location")
+    if isinstance(location_field, dict):
+        parts.append(location_field.get("name", ""))
+    elif isinstance(location_field, str):
+        parts.append(location_field)
+    parts.append(job.get("work_location_detail", ""))
+    combined = " ".join([p for p in parts if p])
+    return extract_city(combined)
+
+
+def check_location_match(cv_location, job_location):
+    """Check if CV location and job location are in same city"""
+    if not cv_location or not job_location:
+        return False
+    # Use cities.py logic for city matching
+    return is_city_match(cv_location, job_location)
 
 
 def generate_job_embedding(text):
@@ -136,7 +278,10 @@ async def recommend_jobs(file: UploadFile = File(...)):
             "salary_raw": 1,
             "company": 1,
             "requirements": 1,
-            "description": 1
+            "description": 1,
+            "experience": 1,
+            "experienceLevel": 1,
+            "work_location_detail": 1
         }))
 
         if len(jobs) == 0:
@@ -177,6 +322,10 @@ async def recommend_jobs(file: UploadFile = File(...)):
         scores = cosine_similarity([cv_emb], job_vectors)[0]
 
         # Format kết quả với chi tiết matched skills
+        cv_full_location = extract_location_text(text)
+        cv_city = extract_city(cv_full_location) if cv_full_location else ""
+        cv_experience_years = parse_experience_text(text)
+
         results = []
         for job, score, used_fallback_emb in zip(jobs, scores, job_embeddings_fallback):
             # Prepare job skills with fallback logic
@@ -191,19 +340,55 @@ async def recommend_jobs(file: UploadFile = File(...)):
             matched_domain = cv_skills_set & job_domain
             matched_total = cv_skills_set & job_all_skills
             
-            # Tính tỷ lệ match
-            match_percentage = 0
+            # Tính tỷ lệ match skill
+            skill_score = 0
             if len(job_all_skills) > 0:
-                match_percentage = round((len(matched_total) / len(job_all_skills)) * 100, 1)
-            
+                skill_score = (len(matched_total) / len(job_all_skills)) * 100
+
+            # Kinh nghiệm
+            job_experience_years = parse_job_experience(job.get("experience") or job.get("experienceLevel"))
+            experience_match = None
+            experience_score = 50  # default: chưa xác định
+            if cv_experience_years is not None and job_experience_years is not None:
+                experience_match = cv_experience_years >= job_experience_years
+                experience_score = 100 if experience_match else 0
+
+            # Địa điểm - lấy full location từ job nhưng so trùng theo city
+            parts = []
+            location_field = job.get("location")
+            if isinstance(location_field, dict):
+                parts.append(location_field.get("name", ""))
+            elif isinstance(location_field, str):
+                parts.append(location_field)
+            parts.append(job.get("work_location_detail", ""))
+            job_full_location = " | ".join([p for p in parts if p])
+            job_city = extract_city(job_full_location) if job_full_location else ""
+            location_match = check_location_match(cv_city, job_city) if cv_city and job_city else False
+            location_score = 100 if location_match else (50 if (cv_city and job_city) else 0)
+
+            # Tính match_percentage dựa trên 3 yếu tố: skill (70%), experience (15%), location (15%)
+            match_percentage = round(skill_score * 0.7 + experience_score * 0.15 + location_score * 0.15, 1)
+
             # Tạo lý do giải thích
             reason_parts = []
             if len(matched_required) > 0:
                 reason_parts.append(f"Match {len(matched_required)}/{len(job_required_skills)} kỹ năng bắt buộc")
             if len(matched_optional) > 0:
                 reason_parts.append(f"Match {len(matched_optional)} kỹ năng tùy chọn")
+            if experience_match is True:
+                reason_parts.append("Kinh nghiệm đủ yêu cầu")
+            elif experience_match is False:
+                reason_parts.append("Kinh nghiệm có thể thấp hơn yêu cầu")
+            if location_match:
+                reason_parts.append("Địa điểm phù hợp")
             
             reason = "; ".join(reason_parts) if reason_parts else "Nội dung CV phù hợp với yêu cầu công việc"
+
+            combined_score = float(score) + match_percentage / 100.0
+            if experience_match is True:
+                combined_score += 0.10
+            if location_match:
+                combined_score += 0.05
 
             results.append({
                 "id": str(job["_id"]),
@@ -213,6 +398,16 @@ async def recommend_jobs(file: UploadFile = File(...)):
                 "company": str(job.get("company", "")),
                 "score": float(score),
                 "similarity_percentage": round(float(score) * 100, 1),
+                "match_percentage": match_percentage,
+                "experience_required": job_experience_years,
+                "experience_match": experience_match,
+                "cv_experience_years": cv_experience_years,
+                "location_match": location_match,
+                "cv_location": cv_full_location,
+                "cv_city": cv_city,
+                "job_location_text": job_full_location,
+                "job_city": job_city,
+                "combined_score": round(combined_score, 4),
                 "matched_skills": {
                     "required": list(matched_required),
                     "optional": list(matched_optional),
@@ -220,13 +415,12 @@ async def recommend_jobs(file: UploadFile = File(...)):
                     "total_matched": len(matched_total),
                     "total_job_skills": len(job_all_skills)
                 },
-                "match_percentage": match_percentage,
                 "reason": reason
             })
 
         return convert_objectid_to_str({
             "skills_found": cv_skills,
-            "recommendations": sorted(results, key=lambda x: x["score"], reverse=True)[:100],
+            "recommendations": sorted(results, key=lambda x: x["combined_score"], reverse=True)[:100],
             "summary": f"Tìm được {len(cv_skills)} kỹ năng trong CV của bạn"
         })
     
