@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from io import BytesIO
 import re
 import pdfplumber
+from docx import Document
 from sentence_transformers import SentenceTransformer
 from rapidfuzz import fuzz
 from sklearn.metrics.pairwise import cosine_similarity
@@ -58,6 +59,40 @@ def extract_pdf_text(file_like):
                 text += page_text + "\n"
     return text
 
+def extract_docx_text(file_like):
+    doc = Document(file_like)
+    text = []
+
+    # Đọc paragraph
+    for para in doc.paragraphs:
+        if para.text.strip():
+            text.append(para.text)
+
+    # Đọc bảng nếu có
+    for table in doc.tables:
+        for row in table.rows:
+            row_text = []
+            for cell in row.cells:
+                if cell.text.strip():
+                    row_text.append(cell.text.strip())
+
+            if row_text:
+                text.append(" | ".join(row_text))
+
+    return "\n".join(text)
+
+def extract_text_from_file(file_bytes, filename):
+    filename = filename.lower()
+
+    if filename.endswith(".pdf"):
+        return extract_pdf_text(BytesIO(file_bytes))
+
+    elif filename.endswith(".docx"):
+        return extract_docx_text(BytesIO(file_bytes))
+
+    else:
+        raise ValueError("Chỉ hỗ trợ file PDF hoặc DOCX")
+
 
 def extract_skills(text):
     text_lower = text.lower()
@@ -82,26 +117,85 @@ def extract_city(text):
 
 
 def extract_location_text(text):
-    """Extract full location address from CV (not just city)"""
-    text_lower = text.lower()
+    """
+    Extract full location/address from CV text.
+    """
+    if not text:
+        return ""
+
     lines = [line.strip() for line in text.splitlines() if line.strip()]
-    markers = ["nơi ở", "noi o", "địa chỉ", "dia chi", "đ/c", "dc", "address", "location", "📍", "pin"]
+
+    # 1. Priority: keyword-based
+    markers = [
+        "nơi ở",
+        "noi o",
+        "địa chỉ",
+        "dia chi",
+        "đ/c",
+        "dc",
+        "address",
+        "location",
+        "📍",
+        "pin",
+    ]
+
     for line in lines:
+        lower = line.lower()
+
         for marker in markers:
-            if marker in line.lower():
-                # capture full text after the marker or icon
+            if marker in lower:
+
                 if marker == "📍":
                     result = line.split(marker, 1)[1].strip()
                 else:
                     parts = re.split(re.escape(marker), line, flags=re.IGNORECASE)
                     result = parts[1].strip() if len(parts) > 1 else line.strip()
+
                 result = re.sub(r"^[\-:\s]+", "", result)
-                if result:
+
+                if len(result) > 5:
                     return result
-    # Last resort: find line with city keyword
+
+    # 2. Detect real address patterns
+    address_patterns = [
+        # US style:
+        # 50 GRAHAM ST, JERSEY CITY, NJ 07307
+        r"\d+\s+[A-Za-z0-9\s\.\-]+,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s+\d{4,6}",
+
+        # Vietnam style:
+        # 123 Nguyễn Văn Cừ, Quận 5, TP.HCM
+        r"\d+\s+[\w\sÀ-ỹ\.\-]+,\s*.*(?:quận|q\.|huyện|tp\.?|thành phố|district|city)",
+
+        # Generic address line with number + street
+        r"\d+\s+.*(?:street|st\.?|road|rd\.?|avenue|ave\.?|boulevard|blvd\.?|lane|ln\.?)",
+    ]
+
     for line in lines:
-        if extract_city(line):
-            return line
+
+        # Skip emails/phones
+        if "@" in line:
+            continue
+
+        digit_count = sum(c.isdigit() for c in line)
+
+        # Address thường phải có số
+        if digit_count == 0:
+            continue
+
+        for pattern in address_patterns:
+            if re.search(pattern, line, re.IGNORECASE):
+
+                # tránh match quá dài
+                if len(line) < 120:
+                    return line.strip()
+
+    # 3. Fallback by city detection
+    for line in lines:
+        city = extract_city(line)
+
+        if city:
+            return line.strip()
+
     return ""
 
 
@@ -245,12 +339,21 @@ def prepare_job_skills(job):
 @app.post("/recommend")
 async def recommend_jobs(file: UploadFile = File(...)):
     try:
+        allowed_extensions = [".pdf", ".docx"]
+
+        if not any(file.filename.lower().endswith(ext) for ext in allowed_extensions):
+            return {
+                "error": "File không hợp lệ. Vui lòng tải lên file CV định dạng PDF hoặc DOCX.",
+                "skills_found": [],
+                "recommendations": []
+            }
+        
         # Extract text
-        pdf_bytes = await file.read()
-        text = extract_pdf_text(BytesIO(pdf_bytes))
+        file_bytes = await file.read()
+        text = extract_text_from_file(file_bytes=file_bytes, filename=file.filename)
         if not text or text.strip() == "":
             return {
-                "error": "Không thể đọc nội dung PDF. Vui lòng kiểm tra file CV.",
+                "error": "Không thể đọc nội dung file. Vui lòng kiểm tra file CV.",
                 "skills_found": [],
                 "recommendations": []
             }

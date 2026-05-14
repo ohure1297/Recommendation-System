@@ -2,14 +2,22 @@ from bson import ObjectId
 import os
 from sentence_transformers import SentenceTransformer
 from pymongo import MongoClient
+from dotenv import load_dotenv
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-client = MongoClient(os.getenv("MONGO_URL"))
-db = client["ITJOBS"]
-jobs = db["jobs"]
-skills = db["skills"]
+load_dotenv()
 
+mongo_url = os.getenv("MONGO_URL")
+
+try:
+    client = MongoClient(mongo_url)
+    db = client["ITJOBS"]
+    jobs = db.jobs
+    skills = db.skills
+except Exception as e:
+    print(f"Error connecting to MongoDB: {e}")
+    raise RuntimeError("Failed to connect to MongoDB. Check MONGO_URL and your connection.")
 
 def get_skill_names(skill_ids):
     obj_ids = [ObjectId(s) for s in skill_ids if ObjectId.is_valid(s)]
@@ -34,22 +42,17 @@ def merge_skills(job):
 
 def update_all_job_embeddings(batch_size=50):
     """
-    Chỉ update job:
-    - Không có embedding
-    - HOẶC không có skills
+    Generate embeddings for ALL jobs, không phân biệt đã có hay chưa
     """
-    query = {
-        "$or": [
-            {"embedding": {"$exists": False}},
-            {"skills": {"$exists": False}},
-            {"skills": {"$size": 0}}
-        ]
-    }
-
+    # Lấy tất cả jobs
+    query = {}
+    
     total = jobs.count_documents(query)
-    print(f"Need to update: {total} jobs")
+    print(f"Total jobs in database: {total}")
+    print(f"Generating embeddings for ALL {total} jobs...\n")
 
-    all_jobs = jobs.find(query)
+    # Lấy tất cả jobs, sắp xếp mới nhất trước
+    all_jobs = jobs.find(query).sort("createdAt", -1)
 
     processed = 0
     batch = []
@@ -59,15 +62,20 @@ def update_all_job_embeddings(batch_size=50):
         if len(batch) >= batch_size:
             process_batch(batch)
             processed += len(batch)
-            print(f"Processed {processed}/{total}")
+            print(f"Processed {processed}/{total} jobs...")
             batch = []
 
     if batch:
         process_batch(batch)
         processed += len(batch)
-        print(f"Processed {processed}/{total}")
+        print(f"Processed {processed}/{total} jobs...")
 
-    print("Updated embeddings done ✔")
+    print(f"\n✔ Generated embeddings for {processed} jobs!")
+    
+    # Verify final count
+    final_with_embedding = jobs.count_documents({"embedding": {"$exists": True}})
+    final_without = jobs.count_documents({"embedding": {"$exists": False}})
+    print(f"Final: {final_with_embedding} jobs with embedding, {final_without} without")
 
 
 def process_batch(job_batch):
