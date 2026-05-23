@@ -1,0 +1,10 @@
+services:
+  recommend:
+    build: .
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    environment:
+      - MONGO_URL=${MONGO_URL}
+    volumes:
+      - .:/app

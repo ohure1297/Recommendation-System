@@ -30,6 +30,38 @@ pip install -r requirements.txt
 
 > Lưu ý: `.env` có thể chứa thông tin nhạy cảm (username/password). Không commit thông tin nhạy cảm lên kho công khai.
 
+## Docker
+
+Nếu bạn muốn đóng gói dịch vụ recommend để chạy độc lập hoặc triển khai dễ dàng, có thể dùng Docker.
+
+### Dockerfile
+- Đã tạo `Dockerfile` trong thư mục `Recommendation-System`.
+- Ứng dụng sẽ chạy bằng lệnh:
+
+```
+uvicorn CV_based:app --host 0.0.0.0 --port 8000
+```
+
+### docker-compose
+- Đã thêm `docker-compose.yml` để chạy service recommend.
+- Mặc định service expose cổng `8000`.
+
+### Chạy bằng Docker Compose
+1. Đảm bảo trong thư mục `Recommendation-System` có file `.env` với `MONGO_URL`.
+2. Chạy:
+
+```
+docker compose up --build
+```
+
+3. Truy cập API:
+
+```
+http://localhost:8000/recommend
+```
+
+> Nếu bạn dùng MongoDB Atlas như hiện tại, không cần MongoDB local container. Chỉ cần `MONGO_URL` trỏ tới Atlas trong `.env`.
+
 ## Chạy các công cụ
 
 - Tạo/generate embedding cho công việc (jobs):
