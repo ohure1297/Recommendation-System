@@ -1,107 +1,503 @@
-# Recommendation System
+# 🤖 AI Recommendation System
 
-Recommendation API for IT-JOBS-FINDER — dịch vụ gợi ý công việc dựa trên embedding của CV và mô tả công việc.
+<div align="center">
 
-## Tổng quan
-- Dùng `sentence-transformers` để tạo embedding cho CV và mô tả công việc.
-- Lưu embedding trong MongoDB và tính cosine similarity để xếp hạng công việc.
-- API được triển khai bằng `FastAPI` (module: `CV_based.py`).
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge\&logo=python\&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688?style=for-the-badge\&logo=fastapi\&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-7.x-47A248?style=for-the-badge\&logo=mongodb\&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge\&logo=docker\&logoColor=white)
+![Sentence Transformers](https://img.shields.io/badge/SentenceTransformers-Embedding-orange?style=for-the-badge)
+
+**Hệ thống Recommendation thông minh sử dụng Semantic Embedding + Vector Similarity Search cho bài toán gợi ý việc làm IT**
+
+[Demo](#) · [Report Bug](https://github.com/ohure1297/Recommendation-System/issues) · [Contributing](#đóng-góp)
+
+</div>
+
+---
+
+# 📋 Mục lục
+
+* [Tổng quan dự án](#-tổng-quan-dự-án)
+* [Tính năng nổi bật](#-tính-năng-nổi-bật)
+* [Tech Stack](#-tech-stack)
+* [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống)
+* [Luồng recommendation](#-luồng-recommendation)
+* [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
+* [Giải thích thành phần](#-giải-thích-thành-phần)
+* [Cài đặt & Chạy dự án](#-cài-đặt--chạy-dự-án)
+* [API Documentation](#-api-documentation)
+* [Design Patterns](#-design-patterns)
+* [Challenges & Solutions](#-challenges--solutions)
+
+---
+
+# 🎯 Tổng quan dự án
+
+**AI Recommendation System** là hệ thống recommendation thông minh giúp phân tích CV, vector hóa dữ liệu và tính toán semantic similarity nhằm gợi ý việc làm IT phù hợp với kỹ năng, kinh nghiệm và địa điểm của người dùng.
+
+Hệ thống sử dụng:
+
+* Sentence Transformers Embedding
+* Cosine Similarity
+* Vector-based Recommendation
+* CV Parsing Pipeline
+* Semantic Matching
+
+Mục tiêu của dự án là cải thiện độ chính xác recommendation so với phương pháp keyword matching truyền thống.
+
+---
+
+## 🧠 Vấn đề được giải quyết
+
+| Vấn đề                           | Giải pháp                                    |
+| -------------------------------- | -------------------------------------------- |
+| Keyword matching thiếu chính xác | Semantic Embedding                           |
+| CV có format không đồng nhất     | CV preprocessing pipeline                    |
+| Search không hiểu ngữ nghĩa      | Vector Similarity Search                     |
+| Recommendation chưa cá nhân hóa  | Matching theo skills + experience + location |
+| Dữ liệu location không đồng nhất | City normalization logic                     |
+
+---
+
+# ✨ Tính năng nổi bật
+
+* 📄 CV Parsing & Processing
+* 🔍 Semantic Job Recommendation
+* 🧩 Vector Embedding Similarity Search
+* 📍 Location-aware Recommendation
+* ⚡ Fast Similarity Calculation
+* 🐳 Dockerized Deployment
+* 📊 Structured Recommendation Pipeline
+* 🔄 Modular AI Processing Scripts
+
+---
+
+# 🛠 Tech Stack
+
+## Core Framework
+
+| Công nghệ | Vai trò            |
+| --------- | ------------------ |
+| FastAPI   | REST API framework |
+| Uvicorn   | ASGI server        |
+| Pydantic  | Data validation    |
+
+---
+
+## AI / Machine Learning
+
+| Công nghệ             | Vai trò                       |
+| --------------------- | ----------------------------- |
+| sentence-transformers | Generate semantic embeddings  |
+| scikit-learn          | Cosine similarity calculation |
+| NumPy                 | Numerical computation         |
+| Pandas                | Data preprocessing            |
+
+---
+
+## Database & Infrastructure
+
+| Công nghệ      | Vai trò                       |
+| -------------- | ----------------------------- |
+| MongoDB        | Store jobs & CV data          |
+| Docker         | Containerization              |
+| Docker Compose | Multi-container orchestration |
+
+---
+
+# 🏗 Kiến trúc hệ thống
+
+```text
+┌────────────────────────────────────────────────────┐
+│                CLIENT / FRONTEND                  │
+└──────────────────────┬────────────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────────────┐
+│               FASTAPI APPLICATION                 │
+│                                                    │
+│   ┌─────────────┐      ┌────────────────────┐      │
+│   │  Upload CV  │      │ Recommendation API │      │
+│   └──────┬──────┘      └──────────┬─────────┘      │
+└──────────│────────────────────────│────────────────┘
+           │                        │
+           ▼                        ▼
+┌──────────────────┐      ┌─────────────────────────┐
+│  CV Processing   │      │ Similarity Calculation │
+│  Pipeline        │      │ Cosine Similarity      │
+└────────┬─────────┘      └──────────┬──────────────┘
+         │                           │
+         ▼                           ▼
+┌────────────────────────────────────────────────────┐
+│         Sentence Transformer Embeddings            │
+└──────────────────────┬─────────────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────────────┐
+│                    MongoDB                        │
+│        CV Data + Job Data + Embeddings           │
+└────────────────────────────────────────────────────┘
+```
+
+---
+
+# 🔄 Luồng Recommendation
+
+## CV Recommendation Pipeline
+
+```text
+CV Upload
+    │
+    ▼
+Text Extraction
+    │
+    ▼
+Data Cleaning
+    │
+    ▼
+Skill Extraction
+    │
+    ▼
+Experience Parsing
+    │
+    ▼
+Location Normalization
+    │
+    ▼
+Embedding Generation
+    │
+    ▼
+Similarity Matching
+    │
+    ▼
+Top-K Job Recommendation
+```
+
+---
+
+## Semantic Matching Workflow
+
+```text
+User CV
+    │
+    ▼
+Sentence Transformer
+    │
+    ▼
+Vector Embedding
+    │
+    ▼
+Cosine Similarity
+    │
+    ▼
+Ranking Algorithm
+    │
+    ▼
+Recommended Jobs
+```
+
+---
+
+# 📁 Cấu trúc thư mục
+
+```text
+Recommendation-System/
+│
+├── .dockerignore
+├── .gitignore
+│
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── README.md
+│
+├── CV_based.py
+├── cv_utils.py
+├── cv_embedding_update.py
+├── job_embedding_update.py
+├── migrate_jobs.py
+└── cities.py
+```
+
+---
+
+# 🔍 Giải thích thành phần
+
+## `CV_based.py` — Main Recommendation API
+
+File trung tâm của hệ thống recommendation.
+
+Chức năng:
+
+* Upload & xử lý CV
+* Recommendation pipeline
+* Similarity matching
+* API endpoints
+* Response generation
+
+---
+
+## `cv_utils.py` — CV Processing Utilities
+
+Chứa các utility functions:
+
+* Extract text từ PDF
+* Skill extraction
+* Experience parsing
+* Text preprocessing
+* Data normalization
+
+---
+
+## `cv_embedding_update.py` — CV Embedding Pipeline
+
+Sinh vector embeddings cho CV.
+
+```python
+embedding = model.encode(cv_text)
+```
+
+Embedding giúp hệ thống hiểu semantic meaning thay vì keyword matching đơn thuần.
+
+---
+
+## `job_embedding_update.py` — Job Embedding Pipeline
+
+Tạo embeddings cho job descriptions để phục vụ recommendation.
+
+Workflow:
+
+```text
+Job Description
+      │
+      ▼
+Text Cleaning
+      │
+      ▼
+Embedding Generation
+      │
+      ▼
+Store Embedding
+```
+
+---
+
+## `migrate_jobs.py` — Data Migration Script
+
+Script phục vụ:
+
+* Import jobs
+* Data preprocessing
+* Data normalization
+* Database migration
+
+---
+
+## `cities.py` — Location Matching Logic
+
+Xử lý location normalization và city matching.
+
+Ví dụ:
+
+```text
+TP.HCM
+Ho Chi Minh
+HCM
+
+→ Ho Chi Minh City
+```
+
+Giúp recommendation theo location chính xác hơn.
+
+---
+
+# 🚀 Cài đặt & Chạy dự án
 
 ## Yêu cầu
-- Python 3.8+
-- MongoDB (chuỗi kết nối lưu trong file `.env` dưới biến `MONGO_URL`)
-- (Tùy chọn) GPU + CUDA để tăng tốc khi tạo embedding với `sentence-transformers`.
 
-## Cài đặt (ví dụ Windows)
-1. Tạo virtualenv và kích hoạt:
+* Python 3.11+
+* MongoDB
+* Docker & Docker Compose
 
+---
+
+## 1. Clone repository
+
+```bash
+git clone https://github.com/ohure1297/Recommendation-System.git
+
+cd Recommendation-System
 ```
+
+---
+
+## 2. Tạo virtual environment
+
+```bash
 python -m venv venv
+```
+
+---
+
+## 3. Activate environment
+
+### Windows
+
+```bash
 venv\Scripts\activate
 ```
 
-2. Cài đặt dependencies:
+### Linux / macOS
 
+```bash
+source venv/bin/activate
 ```
+
+---
+
+## 4. Install dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-3. Tạo file `.env` (hoặc cập nhật) với biến môi trường `MONGO_URL`.
+---
 
-> Lưu ý: `.env` có thể chứa thông tin nhạy cảm (username/password). Không commit thông tin nhạy cảm lên kho công khai.
+## 5. Chạy hệ thống
 
-## Docker
-
-Nếu bạn muốn đóng gói dịch vụ recommend để chạy độc lập hoặc triển khai dễ dàng, có thể dùng Docker.
-
-### Dockerfile
-- Đã tạo `Dockerfile` trong thư mục `Recommendation-System`.
-- Ứng dụng sẽ chạy bằng lệnh:
-
-```
-uvicorn CV_based:app --host 0.0.0.0 --port 8000
+```bash
+uvicorn CV_based:app --reload
 ```
 
-### docker-compose
-- Đã thêm `docker-compose.yml` để chạy service recommend.
-- Mặc định service expose cổng `8000`.
+---
 
-### Chạy bằng Docker Compose
-1. Đảm bảo trong thư mục `Recommendation-System` có file `.env` với `MONGO_URL`.
-2. Chạy:
+## 6. Chạy bằng Docker
 
-```
-docker compose up --build
+```bash
+docker-compose up --build
 ```
 
-3. Truy cập API:
+---
 
-```
-http://localhost:8000/recommend
-```
+# 📡 API Documentation
 
-> Nếu bạn dùng MongoDB Atlas như hiện tại, không cần MongoDB local container. Chỉ cần `MONGO_URL` trỏ tới Atlas trong `.env`.
+Sau khi chạy server:
 
-## Chạy các công cụ
-
-- Tạo/generate embedding cho công việc (jobs):
-
-```
-python job_embedding_update.py
+```text
+http://localhost:8000/docs
 ```
 
-- Tạo/generate embedding cho CVs:
+---
 
-```
-python cv_embedding_update.py
-```
+# 🔌 API Endpoints
 
-- Chạy API (FastAPI):
+## `GET /`
 
-```
-python -m uvicorn CV_based:app --reload --port 8000
-```
+Health check endpoint.
 
-## Endpoint chính
-- `POST /recommend` — nhận file CV (`file` form field), hỗ trợ PDF và DOCX. Trả về JSON gồm `skills_found`, `recommendations` và thông tin gợi ý.
+Response:
 
-Ví dụ curl (tệp `cv.pdf`):
-
-```
-curl -F "file=@cv.pdf" http://localhost:8000/recommend
+```json
+{
+  "message": "Recommendation API Running"
+}
 ```
 
-## Các file chính
-- `CV_based.py` — FastAPI app (entrypoint module name: `CV_based:app`).
-- `cv_utils.py` — hàm trích xuất text, skills, location, và helper cho embedding.
-- `job_embedding_update.py` — script tạo embedding cho jobs và cập nhật vào MongoDB.
-- `cv_embedding_update.py` — script tạo embedding cho CVs.
-- `migrate_jobs.py` — script migrate cập nhật các job cũ (thêm embedding, trích xuất skills...).
-- `cities.py` — danh sách và helper chuẩn hóa tên thành phố/tỉnh Việt Nam.
+---
 
-## Ghi chú triển khai
-- `sentence-transformers` thường cần `torch` hoặc `tensorflow`. Tham khảo https://pytorch.org/ để cài `torch` phù hợp với hệ thống (CPU/CUDA).
-- Nếu dùng UploadFile trong FastAPI, cần `python-multipart` đã được thêm trong `requirements.txt`.
+## `POST /recommend`
 
-## Liên hệ
-- Đây là phần của dự án IT-JOBS-FINDER. Sửa đổi/ghi chú thêm nếu cần.
+Request:
+
+```json
+{
+  "cv_text": "Python backend developer with 3 years experience"
+}
+```
+
+Response:
+
+```json
+{
+  "recommendations": [
+    {
+      "job_title": "Backend Developer",
+      "similarity_score": 0.91
+    }
+  ]
+}
+```
+
+---
+
+# 🎨 Design Patterns
+
+## 1. Modular Script-based Architecture
+
+Hệ thống được tổ chức theo từng processing modules riêng biệt:
+
+* CV processing
+* Embedding generation
+* Similarity calculation
+* Recommendation ranking
+
+Giúp dễ maintain và mở rộng pipeline.
+
+---
+
+## 2. Separation of Concerns
+
+| Module                  | Responsibility         |
+| ----------------------- | ---------------------- |
+| cv_utils.py             | CV processing          |
+| cv_embedding_update.py  | CV embeddings          |
+| job_embedding_update.py | Job embeddings         |
+| migrate_jobs.py         | Data migration         |
+| cities.py               | Location normalization |
+
+---
+
+## 3. Vector-based Recommendation
+
+Recommendation dựa trên:
+
+```text
+Semantic Similarity
+```
+
+thay vì keyword matching truyền thống.
+
+---
+
+# 💡 Challenges & Solutions
+
+| Challenges                           | Solutions                       |
+| ------------------------------------ | ------------------------------- |
+| CV format không đồng nhất            | CV preprocessing pipeline       |
+| Recommendation thiếu chính xác       | Sentence Transformer embeddings |
+| Search không hiểu ngữ nghĩa          | Vector similarity search        |
+| Matching theo location khó chính xác | City normalization              |
+| Recommendation ranking chưa tối ưu   | Similarity scoring              |
+
+---
+
+# 📈 Future Improvements
+
+* [ ] Hybrid Recommendation System
+* [ ] Deep Learning Ranking Model
+* [ ] Real-time Recommendation
+* [ ] Recommendation Analytics Dashboard
+* [ ] Kubernetes Deployment
+* [ ] CI/CD Pipeline
+* [ ] Multi-language Recommendation
+* [ ] Distributed Vector Search
+
+---
+
+# 👤 Author
+
+**Ohure1297**
+
+GitHub:
+https://github.com/ohure1297
