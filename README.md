@@ -5,12 +5,13 @@
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge\&logo=python\&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688?style=for-the-badge\&logo=fastapi\&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-7.x-47A248?style=for-the-badge\&logo=mongodb\&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7.x-DC382D?style=for-the-badge\&logo=redis\&logoColor=white)
+![Celery](https://img.shields.io/badge/Celery-5.4.0-37814A?style=for-the-badge\&logo=celery\&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge\&logo=docker\&logoColor=white)
-![Sentence Transformers](https://img.shields.io/badge/SentenceTransformers-Embedding-orange?style=for-the-badge)
 
-**Hệ thống Recommendation thông minh sử dụng Semantic Embedding + Vector Similarity Search cho bài toán gợi ý việc làm IT**
+**Hệ thống Recommendation thông minh sử dụng Vector Embedding + Similarity Search + Async Background Processing**
 
-[Demo](#) · [Report Bug](https://github.com/ohure1297/Recommendation-System/issues) · [Contributing](#đóng-góp)
+[Xem Demo](#) · [Báo lỗi](#) · [Đóng góp](#đóng-góp)
 
 </div>
 
@@ -22,54 +23,52 @@
 * [Tính năng nổi bật](#-tính-năng-nổi-bật)
 * [Tech Stack](#-tech-stack)
 * [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống)
-* [Luồng recommendation](#-luồng-recommendation)
+* [Sơ đồ tư duy](#-sơ-đồ-tư-duy)
+* [Luồng xử lý chi tiết](#-luồng-xử-lý-chi-tiết)
 * [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
-* [Giải thích thành phần](#-giải-thích-thành-phần)
+* [Giải thích từng thành phần](#-giải-thích-từng-thành-phần)
 * [Cài đặt & Chạy dự án](#-cài-đặt--chạy-dự-án)
 * [API Documentation](#-api-documentation)
-* [Design Patterns](#-design-patterns)
-* [Challenges & Solutions](#-challenges--solutions)
+* [Design Patterns & Nguyên lý thiết kế](#-design-patterns--nguyên-lý-thiết-kế)
+* [Những thách thức & Giải pháp](#-những-thách-thức--giải-pháp)
 
 ---
 
 # 🎯 Tổng quan dự án
 
-**AI Recommendation System** là hệ thống recommendation thông minh giúp phân tích CV, vector hóa dữ liệu và tính toán semantic similarity nhằm gợi ý việc làm IT phù hợp với kỹ năng, kinh nghiệm và địa điểm của người dùng.
+**AI Recommendation System** là hệ thống backend thông minh giúp phân tích dữ liệu người dùng, vector hóa nội dung, tính toán semantic similarity và đưa ra recommendation phù hợp bằng Machine Learning.
 
-Hệ thống sử dụng:
+Hệ thống được thiết kế theo hướng production-ready backend architecture với khả năng xử lý bất đồng bộ, dễ mở rộng và tối ưu cho các bài toán:
 
-* Sentence Transformers Embedding
-* Cosine Similarity
-* Vector-based Recommendation
-* CV Parsing Pipeline
-* Semantic Matching
-
-Mục tiêu của dự án là cải thiện độ chính xác recommendation so với phương pháp keyword matching truyền thống.
+* Job Recommendation
+* Product Recommendation
+* Content Recommendation
+* Personalized Search
 
 ---
 
 ## 🧠 Vấn đề được giải quyết
 
-| Vấn đề                           | Giải pháp                                    |
-| -------------------------------- | -------------------------------------------- |
-| Keyword matching thiếu chính xác | Semantic Embedding                           |
-| CV có format không đồng nhất     | CV preprocessing pipeline                    |
-| Search không hiểu ngữ nghĩa      | Vector Similarity Search                     |
-| Recommendation chưa cá nhân hóa  | Matching theo skills + experience + location |
-| Dữ liệu location không đồng nhất | City normalization logic                     |
+| Vấn đề                                      | Giải pháp                              |
+| ------------------------------------------- | -------------------------------------- |
+| Recommendation không chính xác theo keyword | Semantic Embedding + Cosine Similarity |
+| Dữ liệu lớn gây chậm hệ thống               | Async worker + Redis queue             |
+| Dữ liệu thô khó xử lý                       | Cleaning + Normalization pipeline      |
+| Khó scale recommendation engine             | Dockerized modular architecture        |
+| Search không hiểu ngữ nghĩa                 | Sentence Transformer embeddings        |
 
 ---
 
 # ✨ Tính năng nổi bật
 
-* 📄 CV Parsing & Processing
-* 🔍 Semantic Job Recommendation
-* 🧩 Vector Embedding Similarity Search
-* 📍 Location-aware Recommendation
-* ⚡ Fast Similarity Calculation
-* 🐳 Dockerized Deployment
-* 📊 Structured Recommendation Pipeline
-* 🔄 Modular AI Processing Scripts
+* 🔍 **AI Recommendation Engine** — Gợi ý thông minh bằng vector similarity
+* 🧩 **Vector Embedding Search** — Tìm kiếm semantic similarity với embedding vectors
+* ⚡ **Async Processing** — Celery + Redis xử lý dữ liệu nền
+* 📄 **Data Processing Pipeline** — Cleaning, normalization, feature extraction
+* 🛡️ **Validation Layer** — Validate và sanitize dữ liệu đầu vào
+* 🐳 **Docker-ready** — Toàn bộ infrastructure được containerized
+* 📊 **Structured Logging** — Logging có cấu trúc để debug & monitor
+* 🔄 **Scalable Architecture** — Thiết kế module hóa, dễ mở rộng AI pipeline
 
 ---
 
@@ -77,124 +76,144 @@ Mục tiêu của dự án là cải thiện độ chính xác recommendation so
 
 ## Core Framework
 
-| Công nghệ | Vai trò            |
-| --------- | ------------------ |
-| FastAPI   | REST API framework |
-| Uvicorn   | ASGI server        |
-| Pydantic  | Data validation    |
+| Công nghệ       | Phiên bản | Vai trò            |
+| --------------- | --------- | ------------------ |
+| **FastAPI**     | 0.115.0   | REST API framework |
+| **Uvicorn**     | 0.30.6    | ASGI server        |
+| **Pydantic v2** | 2.8.2     | Data validation    |
 
 ---
 
-## AI / Machine Learning
+## AI / ML
 
-| Công nghệ             | Vai trò                       |
-| --------------------- | ----------------------------- |
-| sentence-transformers | Generate semantic embeddings  |
-| scikit-learn          | Cosine similarity calculation |
-| NumPy                 | Numerical computation         |
-| Pandas                | Data preprocessing            |
+| Công nghệ                 | Phiên bản | Vai trò                |
+| ------------------------- | --------- | ---------------------- |
+| **sentence-transformers** | 3.1.1     | Generate embeddings    |
+| **scikit-learn**          | Latest    | Similarity calculation |
+| **NumPy**                 | Latest    | Numerical computation  |
+| **Pandas**                | Latest    | Data preprocessing     |
 
 ---
 
-## Database & Infrastructure
+## Infrastructure
 
-| Công nghệ      | Vai trò                       |
-| -------------- | ----------------------------- |
-| MongoDB        | Store jobs & CV data          |
-| Docker         | Containerization              |
-| Docker Compose | Multi-container orchestration |
+| Công nghệ          | Phiên bản | Vai trò                    |
+| ------------------ | --------- | -------------------------- |
+| **Redis**          | 7.x       | Queue + caching            |
+| **Celery**         | 5.4.0     | Background task processing |
+| **MongoDB**        | 7.x       | Document database          |
+| **Docker Compose** | —         | Container orchestration    |
 
 ---
 
 # 🏗 Kiến trúc hệ thống
 
 ```text
-┌────────────────────────────────────────────────────┐
-│                CLIENT / FRONTEND                  │
-└──────────────────────┬────────────────────────────┘
-                       │
-                       ▼
-┌────────────────────────────────────────────────────┐
-│               FASTAPI APPLICATION                 │
-│                                                    │
-│   ┌─────────────┐      ┌────────────────────┐      │
-│   │  Upload CV  │      │ Recommendation API │      │
-│   └──────┬──────┘      └──────────┬─────────┘      │
-└──────────│────────────────────────│────────────────┘
-           │                        │
-           ▼                        ▼
-┌──────────────────┐      ┌─────────────────────────┐
-│  CV Processing   │      │ Similarity Calculation │
-│  Pipeline        │      │ Cosine Similarity      │
-└────────┬─────────┘      └──────────┬──────────────┘
-         │                           │
-         ▼                           ▼
-┌────────────────────────────────────────────────────┐
-│         Sentence Transformer Embeddings            │
-└──────────────────────┬─────────────────────────────┘
-                       │
-                       ▼
-┌────────────────────────────────────────────────────┐
-│                    MongoDB                        │
-│        CV Data + Job Data + Embeddings           │
-└────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                     CLIENT / FRONTEND                       │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ HTTP Request
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                FASTAPI APPLICATION (Port 8000)              │
+│                                                             │
+│  ┌─────────────┐  ┌────────────────┐  ┌────────────────┐   │
+│  │  /health    │  │  /recommend    │  │  /upload-data  │   │
+│  └──────┬──────┘  └────────┬───────┘  └────────┬───────┘   │
+└─────────│──────────────────│───────────────────│───────────┘
+          │                  │                   │
+          ▼                  ▼                   ▼
+┌────────────────┐  ┌────────────────┐  ┌───────────────────┐
+│ Recommendation │  │ Similarity     │  │ Redis Queue       │
+│ Engine         │  │ Search Service │  │ Background Tasks  │
+└────────┬───────┘  └────────┬───────┘  └────────┬──────────┘
+         │                   │                   │
+         ▼                   ▼                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     CELERY WORKER                           │
+│                                                             │
+│ 1. Data Extraction                                          │
+│ 2. Cleaning & Normalize                                     │
+│ 3. Chunking / Feature Processing                            │
+│ 4. Embedding Generation                                     │
+│ 5. Store Vector Embeddings                                  │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 VECTOR DATABASE / STORAGE                   │
+│                  MongoDB + Embedding Store                  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-# 🔄 Luồng Recommendation
+# 🗺 Sơ đồ tư duy
 
-## CV Recommendation Pipeline
+## Tổng thể hệ thống
 
 ```text
-CV Upload
-    │
-    ▼
-Text Extraction
-    │
-    ▼
-Data Cleaning
-    │
-    ▼
-Skill Extraction
-    │
-    ▼
-Experience Parsing
-    │
-    ▼
-Location Normalization
-    │
-    ▼
+                  AI RECOMMENDATION SYSTEM
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+  📦 INFRASTRUCTURE     🔄 PROCESSING         🧠 AI CORE
+        │                     │                     │
+   ┌────┴────┐          ┌─────┴─────┐        ┌─────┴─────┐
+   │ Docker  │          │ Celery    │        │ Embedding │
+   │ Redis   │          │ Worker    │        │ Similarity│
+   │ MongoDB │          │ Queue     │        │ Ranking   │
+   └─────────┘          └─────┬─────┘        └─────┬─────┘
+                               │                    │
+                        ┌──────┴──────┐      ┌──────┴──────┐
+                        │ Data Process │      │ Recommendation│
+                        │ Pipeline     │      │ Engine        │
+                        └──────────────┘      └──────────────┘
+```
+
+---
+
+# 🔄 Luồng xử lý chi tiết
+
+## 1. Data Processing Flow
+
+```text
+Raw Data Upload
+      │
+      ▼
+Validation Layer
+      │
+      ▼
+Text Cleaning
+      │
+      ▼
+Feature Extraction
+      │
+      ▼
 Embedding Generation
-    │
-    ▼
-Similarity Matching
-    │
-    ▼
-Top-K Job Recommendation
+      │
+      ▼
+Store Vector Embeddings
 ```
 
 ---
 
-## Semantic Matching Workflow
+## 2. Recommendation Flow
 
 ```text
-User CV
-    │
-    ▼
-Sentence Transformer
-    │
-    ▼
-Vector Embedding
-    │
-    ▼
-Cosine Similarity
-    │
-    ▼
+User Query
+      │
+      ▼
+Embedding Generation
+      │
+      ▼
+Vector Similarity Search
+      │
+      ▼
 Ranking Algorithm
-    │
-    ▼
-Recommended Jobs
+      │
+      ▼
+Top-K Recommendation Results
 ```
 
 ---
@@ -202,113 +221,75 @@ Recommended Jobs
 # 📁 Cấu trúc thư mục
 
 ```text
-Recommendation-System/
+recommendation-system/
 │
-├── .dockerignore
-├── .gitignore
-│
+├── main.py
+├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
-├── requirements.txt
-├── README.md
 │
-├── CV_based.py
-├── cv_utils.py
-├── cv_embedding_update.py
-├── job_embedding_update.py
-├── migrate_jobs.py
-└── cities.py
+├── core/
+│   ├── config.py
+│   ├── dependencies.py
+│   └── logger.py
+│
+├── routers/
+│   ├── recommend.py
+│   ├── upload.py
+│   └── health.py
+│
+├── services/
+│   │
+│   ├── validation/
+│   ├── processing/
+│   ├── recommendation/
+│   └── storage/
+│
+├── models/
+│   └── schemas.py
+│
+└── workers/
+    ├── celery_app.py
+    └── processing_worker.py
 ```
 
 ---
 
-# 🔍 Giải thích thành phần
+# 🔍 Giải thích từng thành phần
 
-## `CV_based.py` — Main Recommendation API
-
-File trung tâm của hệ thống recommendation.
-
-Chức năng:
-
-* Upload & xử lý CV
-* Recommendation pipeline
-* Similarity matching
-* API endpoints
-* Response generation
-
----
-
-## `cv_utils.py` — CV Processing Utilities
-
-Chứa các utility functions:
-
-* Extract text từ PDF
-* Skill extraction
-* Experience parsing
-* Text preprocessing
-* Data normalization
-
----
-
-## `cv_embedding_update.py` — CV Embedding Pipeline
-
-Sinh vector embeddings cho CV.
+## `embedding_service.py` — Embedding Engine
 
 ```python
-embedding = model.encode(cv_text)
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
+embedding = model.encode(text)
 ```
 
-Embedding giúp hệ thống hiểu semantic meaning thay vì keyword matching đơn thuần.
+Embedding giúp hệ thống recommendation hiểu ngữ nghĩa thay vì chỉ keyword matching.
 
 ---
 
-## `job_embedding_update.py` — Job Embedding Pipeline
+## `similarity_service.py` — Recommendation Core
 
-Tạo embeddings cho job descriptions để phục vụ recommendation.
-
-Workflow:
-
-```text
-Job Description
-      │
-      ▼
-Text Cleaning
-      │
-      ▼
-Embedding Generation
-      │
-      ▼
-Store Embedding
+```python
+similarity = cosine_similarity(user_vector, item_vectors)
 ```
+
+Tính toán semantic similarity giữa user vector và item vectors.
 
 ---
 
-## `migrate_jobs.py` — Data Migration Script
+## `processing_worker.py` — Async Background Processing
 
-Script phục vụ:
-
-* Import jobs
-* Data preprocessing
-* Data normalization
-* Database migration
-
----
-
-## `cities.py` — Location Matching Logic
-
-Xử lý location normalization và city matching.
-
-Ví dụ:
-
-```text
-TP.HCM
-Ho Chi Minh
-HCM
-
-→ Ho Chi Minh City
+```python
+@celery_app.task
+def process_data(data):
+    cleaned = cleaning_service.clean(data)
+    embeddings = embedding_service.embed(cleaned)
+    vector_service.store(embeddings)
 ```
 
-Giúp recommendation theo location chính xác hơn.
+Celery worker xử lý nền giúp API không bị block khi xử lý dữ liệu lớn.
 
 ---
 
@@ -316,9 +297,10 @@ Giúp recommendation theo location chính xác hơn.
 
 ## Yêu cầu
 
+* Docker & Docker Compose
 * Python 3.11+
 * MongoDB
-* Docker & Docker Compose
+* Redis
 
 ---
 
@@ -332,50 +314,36 @@ cd Recommendation-System
 
 ---
 
-## 2. Tạo virtual environment
+## 2. Tạo file `.env`
 
-```bash
-python -m venv venv
+```env
+MONGODB_URL=mongodb://mongodb:27017
+
+REDIS_URL=redis://redis:6379
+
+EMBEDDING_MODEL=all-MiniLM-L6-v2
 ```
 
 ---
 
-## 3. Activate environment
-
-### Windows
-
-```bash
-venv\Scripts\activate
-```
-
-### Linux / macOS
-
-```bash
-source venv/bin/activate
-```
-
----
-
-## 4. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## 5. Chạy hệ thống
-
-```bash
-uvicorn CV_based:app --reload
-```
-
----
-
-## 6. Chạy bằng Docker
+## 3. Chạy bằng Docker
 
 ```bash
 docker-compose up --build
+```
+
+---
+
+## 4. Chạy local
+
+```bash
+python -m venv venv
+
+venv\Scripts\activate
+
+pip install -r requirements.txt
+
+uvicorn main:app --reload
 ```
 
 ---
@@ -390,29 +358,25 @@ http://localhost:8000/docs
 
 ---
 
-# 🔌 API Endpoints
+## Endpoints
 
-## `GET /`
-
-Health check endpoint.
-
-Response:
+### `GET /health`
 
 ```json
 {
-  "message": "Recommendation API Running"
+  "status": "ok"
 }
 ```
 
 ---
 
-## `POST /recommend`
+### `POST /recommend`
 
 Request:
 
 ```json
 {
-  "cv_text": "Python backend developer with 3 years experience"
+  "query": "Backend Python Developer"
 }
 ```
 
@@ -420,10 +384,10 @@ Response:
 
 ```json
 {
-  "recommendations": [
+  "results": [
     {
-      "job_title": "Backend Developer",
-      "similarity_score": 0.91
+      "id": "job_01",
+      "score": 0.92
     }
   ]
 }
@@ -431,73 +395,69 @@ Response:
 
 ---
 
-# 🎨 Design Patterns
+# 🎨 Design Patterns & Nguyên lý thiết kế
 
-## 1. Modular Script-based Architecture
+## 1. Clean Architecture
 
-Hệ thống được tổ chức theo từng processing modules riêng biệt:
-
-* CV processing
-* Embedding generation
-* Similarity calculation
-* Recommendation ranking
-
-Giúp dễ maintain và mở rộng pipeline.
+```text
+Routers → Services → Models
+```
 
 ---
 
 ## 2. Separation of Concerns
 
-| Module                  | Responsibility         |
-| ----------------------- | ---------------------- |
-| cv_utils.py             | CV processing          |
-| cv_embedding_update.py  | CV embeddings          |
-| job_embedding_update.py | Job embeddings         |
-| migrate_jobs.py         | Data migration         |
-| cities.py               | Location normalization |
+* `embedding_service` → generate embeddings
+* `similarity_service` → similarity calculation
+* `ranking_service` → recommendation ranking
 
 ---
 
-## 3. Vector-based Recommendation
+## 3. Dependency Injection
 
-Recommendation dựa trên:
+Inject dependencies qua FastAPI `Depends()` để dễ test và mở rộng.
 
-```text
-Semantic Similarity
+---
+
+## 4. Async-first
+
+```python
+async def recommend(query: str):
+    embedding = await embedding_service.embed(query)
+    results = await vector_service.search(embedding)
+
+    return results
 ```
 
-thay vì keyword matching truyền thống.
+---
+
+# 💡 Những thách thức & Giải pháp
+
+| Thách thức                     | Giải pháp                |
+| ------------------------------ | ------------------------ |
+| Recommendation thiếu chính xác | Semantic embeddings      |
+| Blocking API                   | Async worker             |
+| Dữ liệu lớn xử lý chậm         | Redis queue + Celery     |
+| Search không hiểu ngữ nghĩa    | Vector similarity search |
+| Hệ thống khó scale             | Dockerized architecture  |
 
 ---
 
-# 💡 Challenges & Solutions
-
-| Challenges                           | Solutions                       |
-| ------------------------------------ | ------------------------------- |
-| CV format không đồng nhất            | CV preprocessing pipeline       |
-| Recommendation thiếu chính xác       | Sentence Transformer embeddings |
-| Search không hiểu ngữ nghĩa          | Vector similarity search        |
-| Matching theo location khó chính xác | City normalization              |
-| Recommendation ranking chưa tối ưu   | Similarity scoring              |
-
----
-
-# 📈 Future Improvements
+# 📈 Hướng phát triển
 
 * [ ] Hybrid Recommendation System
-* [ ] Deep Learning Ranking Model
+* [ ] Deep Learning Recommendation Models
 * [ ] Real-time Recommendation
 * [ ] Recommendation Analytics Dashboard
-* [ ] Kubernetes Deployment
 * [ ] CI/CD Pipeline
-* [ ] Multi-language Recommendation
-* [ ] Distributed Vector Search
+* [ ] Kubernetes Deployment
 
 ---
 
-# 👤 Author
+# 👤 Tác giả
 
 **Ohure1297**
 
-GitHub:
-https://github.com/ohure1297
+[![GitHub](https://img.shields.io/badge/GitHub-ohure1297-181717?style=flat-square\&logo=github)](https://github.com/ohure1297)
+
+---
