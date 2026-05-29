@@ -3,7 +3,7 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - '8001:8001'
+      - '8010:8010'
     environment:
       - MONGO_URL=${MONGO_URL}
     volumes:
