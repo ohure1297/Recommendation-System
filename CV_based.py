@@ -75,7 +75,7 @@ async def recommend_jobs(file: UploadFile = File(...)):
         fallback_flags = []
         for job in jobs:
             emb = job.get("embedding")
-            if emb:
+            if emb and len(emb) == 384:
                 job_vectors.append(emb)
                 fallback_flags.append(False)
             else:

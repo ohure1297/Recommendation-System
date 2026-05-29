@@ -1,16 +1,17 @@
 fastapi>=0.95.2
 uvicorn[standard]>=0.22.0
 sentence-transformers>=2.2.2
-torch>=1.12.1
-numpy>=1.21.0
+torch>=2.0.0
+numpy>=1.26.0
 scikit-learn>=1.1.0
 pymongo>=4.0.0
+dnspython>=2.3.0
 pdfplumber>=0.7.4
 python-docx>=0.8.11
+python-multipart>=0.0.6
 rapidfuzz>=2.13.7
 tqdm>=4.64.0
 python-dotenv>=0.21.0
-python-multipart>=0.0.6
 
 # Notes:
 # - `sentence-transformers` may require a compatible `torch` build; follow https://pytorch.org/ to install
