@@ -17,6 +17,6 @@ RUN python -m pip install --upgrade pip \
 
 COPY . .
 
-EXPOSE 8001
+EXPOSE 8010
 
-CMD ["uvicorn", "CV_based:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "CV_based:app", "--host", "0.0.0.0", "--port", "8010"]

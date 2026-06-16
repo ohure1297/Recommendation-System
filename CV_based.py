@@ -176,3 +176,22 @@ async def recommend_jobs(file: UploadFile = File(...)):
         import traceback
         traceback.print_exc()
         return convert_objectid_to_str({"error": f"Lỗi xử lý: {str(e)}", "skills_found": [], "recommendations": []})
+
+@app.post("/job-embedding")
+async def create_job_embedding(payload: dict):
+    try:
+        text = payload.get("text", "")
+
+        if not text.strip():
+            return {"embedding": []}
+
+        embedding = model.encode(text)
+
+        return {
+            "embedding": embedding.tolist()
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e)
+        }

@@ -385,7 +385,7 @@ docker-compose up --build
 Sau khi chạy server:
 
 ```text
-http://localhost:8001/docs
+http://localhost:8010/docs
 ```
 
 ---
