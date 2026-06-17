@@ -16,6 +16,7 @@ from cv_utils import (
     parse_job_experience,
     prepare_job_skills,
     generate_job_embedding,
+    generate_cv_embedding,
     check_location_match,
     model,
 )
@@ -176,3 +177,44 @@ async def recommend_jobs(file: UploadFile = File(...)):
         import traceback
         traceback.print_exc()
         return convert_objectid_to_str({"error": f"Lỗi xử lý: {str(e)}", "skills_found": [], "recommendations": []})
+
+@app.post("/job-embedding")
+async def create_job_embedding(payload: dict):
+    try:
+        text = payload.get("text", "")
+
+        if not text.strip():
+            return {"embedding": []}
+
+        embedding = model.encode(text)
+
+        return {
+            "embedding": embedding.tolist()
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
+
+@app.post("/cv-embedding")
+async def create_cv_embedding(payload: dict):
+
+    raw_text = payload.get("rawText", "")
+    skills = payload.get("skills", [])
+
+    if not raw_text:
+        return {
+            "success": False,
+            "embedding": []
+        }
+
+    embedding = generate_cv_embedding(
+        raw_text,
+        skills
+    )
+
+    return {
+        "success": True,
+        "embedding": embedding
+    }
