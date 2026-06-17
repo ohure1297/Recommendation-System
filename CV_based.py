@@ -16,6 +16,7 @@ from cv_utils import (
     parse_job_experience,
     prepare_job_skills,
     generate_job_embedding,
+    generate_cv_embedding,
     check_location_match,
     model,
 )
@@ -195,3 +196,25 @@ async def create_job_embedding(payload: dict):
         return {
             "error": str(e)
         }
+
+@app.post("/cv-embedding")
+async def create_cv_embedding(payload: dict):
+
+    raw_text = payload.get("rawText", "")
+    skills = payload.get("skills", [])
+
+    if not raw_text:
+        return {
+            "success": False,
+            "embedding": []
+        }
+
+    embedding = generate_cv_embedding(
+        raw_text,
+        skills
+    )
+
+    return {
+        "success": True,
+        "embedding": embedding
+    }
