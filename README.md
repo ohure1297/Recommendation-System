@@ -1,11 +1,20 @@
+---
+title: It Job Finder Ai Cv
+emoji: 💼
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+---
+
 # 🤖 AI Recommendation System
 
 <div align="center">
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge\&logo=python\&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688?style=for-the-badge\&logo=fastapi\&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-7.x-47A248?style=for-the-badge\&logo=mongodb\&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge\&logo=docker\&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-7.x-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Sentence Transformers](https://img.shields.io/badge/SentenceTransformers-Embedding-orange?style=for-the-badge)
 
 **Hệ thống Recommendation thông minh sử dụng Semantic Embedding + Vector Similarity Search cho bài toán gợi ý việc làm IT**
@@ -18,17 +27,17 @@
 
 # 📋 Mục lục
 
-* [Tổng quan dự án](#-tổng-quan-dự-án)
-* [Tính năng nổi bật](#-tính-năng-nổi-bật)
-* [Tech Stack](#-tech-stack)
-* [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống)
-* [Luồng recommendation](#-luồng-recommendation)
-* [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
-* [Giải thích thành phần](#-giải-thích-thành-phần)
-* [Cài đặt & Chạy dự án](#-cài-đặt--chạy-dự-án)
-* [API Documentation](#-api-documentation)
-* [Design Patterns](#-design-patterns)
-* [Challenges & Solutions](#-challenges--solutions)
+- [Tổng quan dự án](#-tổng-quan-dự-án)
+- [Tính năng nổi bật](#-tính-năng-nổi-bật)
+- [Tech Stack](#-tech-stack)
+- [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống)
+- [Luồng recommendation](#-luồng-recommendation)
+- [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
+- [Giải thích thành phần](#-giải-thích-thành-phần)
+- [Cài đặt & Chạy dự án](#-cài-đặt--chạy-dự-án)
+- [API Documentation](#-api-documentation)
+- [Design Patterns](#-design-patterns)
+- [Challenges & Solutions](#-challenges--solutions)
 
 ---
 
@@ -38,11 +47,11 @@
 
 Hệ thống sử dụng:
 
-* Sentence Transformers Embedding
-* Cosine Similarity
-* Vector-based Recommendation
-* CV Parsing Pipeline
-* Semantic Matching
+- Sentence Transformers Embedding
+- Cosine Similarity
+- Vector-based Recommendation
+- CV Parsing Pipeline
+- Semantic Matching
 
 Mục tiêu của dự án là cải thiện độ chính xác recommendation so với phương pháp keyword matching truyền thống.
 
@@ -62,14 +71,14 @@ Mục tiêu của dự án là cải thiện độ chính xác recommendation so
 
 # ✨ Tính năng nổi bật
 
-* 📄 CV Parsing & Processing
-* 🔍 Semantic Job Recommendation
-* 🧩 Vector Embedding Similarity Search
-* 📍 Location-aware Recommendation
-* ⚡ Fast Similarity Calculation
-* 🐳 Dockerized Deployment
-* 📊 Structured Recommendation Pipeline
-* 🔄 Modular AI Processing Scripts
+- 📄 CV Parsing & Processing
+- 🔍 Semantic Job Recommendation
+- 🧩 Vector Embedding Similarity Search
+- 📍 Location-aware Recommendation
+- ⚡ Fast Similarity Calculation
+- 🐳 Dockerized Deployment
+- 📊 Structured Recommendation Pipeline
+- 🔄 Modular AI Processing Scripts
 
 ---
 
@@ -230,11 +239,11 @@ File trung tâm của hệ thống recommendation.
 
 Chức năng:
 
-* Upload & xử lý CV
-* Recommendation pipeline
-* Similarity matching
-* API endpoints
-* Response generation
+- Upload & xử lý CV
+- Recommendation pipeline
+- Similarity matching
+- API endpoints
+- Response generation
 
 ---
 
@@ -242,11 +251,11 @@ Chức năng:
 
 Chứa các utility functions:
 
-* Extract text từ PDF
-* Skill extraction
-* Experience parsing
-* Text preprocessing
-* Data normalization
+- Extract text từ PDF
+- Skill extraction
+- Experience parsing
+- Text preprocessing
+- Data normalization
 
 ---
 
@@ -287,10 +296,10 @@ Store Embedding
 
 Script phục vụ:
 
-* Import jobs
-* Data preprocessing
-* Data normalization
-* Database migration
+- Import jobs
+- Data preprocessing
+- Data normalization
+- Database migration
 
 ---
 
@@ -316,9 +325,9 @@ Giúp recommendation theo location chính xác hơn.
 
 ## Yêu cầu
 
-* Python 3.11+
-* MongoDB
-* Docker & Docker Compose
+- Python 3.11+
+- MongoDB
+- Docker & Docker Compose
 
 ---
 
@@ -437,10 +446,10 @@ Response:
 
 Hệ thống được tổ chức theo từng processing modules riêng biệt:
 
-* CV processing
-* Embedding generation
-* Similarity calculation
-* Recommendation ranking
+- CV processing
+- Embedding generation
+- Similarity calculation
+- Recommendation ranking
 
 Giúp dễ maintain và mở rộng pipeline.
 
@@ -484,14 +493,14 @@ thay vì keyword matching truyền thống.
 
 # 📈 Future Improvements
 
-* [ ] Hybrid Recommendation System
-* [ ] Deep Learning Ranking Model
-* [ ] Real-time Recommendation
-* [ ] Recommendation Analytics Dashboard
-* [ ] Kubernetes Deployment
-* [ ] CI/CD Pipeline
-* [ ] Multi-language Recommendation
-* [ ] Distributed Vector Search
+- [ ] Hybrid Recommendation System
+- [ ] Deep Learning Ranking Model
+- [ ] Real-time Recommendation
+- [ ] Recommendation Analytics Dashboard
+- [ ] Kubernetes Deployment
+- [ ] CI/CD Pipeline
+- [ ] Multi-language Recommendation
+- [ ] Distributed Vector Search
 
 ---
 
@@ -501,4 +510,3 @@ thay vì keyword matching truyền thống.
 
 GitHub:
 https://github.com/ohure1297
-
